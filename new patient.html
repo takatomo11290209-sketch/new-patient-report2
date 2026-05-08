@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>新患レポート</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy: #1c2b40;
+  --blue: #2c5f8a;
+  --accent: #c8a96e;
+  --bg: #f0f3f7;
+  --surface: #ffffff;
+  --border: #dde3eb;
+  --text: #1c2b40;
+  --sub: #5a6e85;
+  --light: #98aabb;
+  --red: #c0392b;
+  --orange: #e67e22;
+  --green: #27ae60;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ヘッダー */
+.top-bar {
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  height: 52px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.top-bar .title { font-size: 13px; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; }
+.top-bar .actions { display: flex; gap: 8px; }
+.btn {
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+.btn:active { opacity: 0.75; }
+.btn-save { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); }
+.btn-pdf  { background: var(--accent); color: var(--navy); }
+
+/* メイン */
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 14px 90px;
+}
+
+/* カード */
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.card-head {
+  background: var(--navy);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-head .num {
+  background: var(--accent);
+  color: var(--navy);
+  font-size: 10px;
+  font-weight: 700;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+.card-head h2 { color: #fff; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; }
+.card-body { padding: 14px; }
+
+/* フィールド */
+.row { display: flex; gap: 10px; margin-bottom: 10px; }
+.row:last-child { margin-bottom: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.field label {
+  font-size: 10px; font-weight: 700; color: var(--sub);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.field input,
+.field select,
+.field textarea {
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 11px;
+  font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--text);
+  background: #fafbfd;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(44,95,138,0.10);
+}
+.field textarea { resize: vertical; line-height: 1.7; min-height: 80px; }
+.field textarea.sm { min-height: 60px; }
+
+/* 性別トグル */
+.gender-row {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  height: 40px;
+}
+.gender-row input[type="radio"] { display: none; }
+.gender-row label {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  color: var(--sub); background: #fafbfd; transition: all 0.15s;
+  border-right: 1px solid var(--border);
+}
+.gender-row label:last-of-type { border-right: none; }
+.gender-row input:checked + label { background: var(--navy); color: #fff; }
+
+/* 緊急度 */
+.urgency-row {
+  display: flex;
+  gap: 8px;
+}
+.urgency-row input[type="radio"] { display: none; }
+.urgency-row label {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  gap: 5px;
+  padding: 9px 6px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fafbfd;
+  color: var(--sub);
+  text-align: center;
+}
+#urgLow:checked  ~ label[for="urgLow"],
+.urg-low input:checked + label  { border-color: var(--green);  color: var(--green);  background: rgba(39,174,96,0.07); }
+#urgMid:checked  ~ label[for="urgMid"],
+.urg-mid input:checked + label  { border-color: var(--orange); color: var(--orange); background: rgba(230,126,34,0.07); }
+#urgHigh:checked ~ label[for="urgHigh"],
+.urg-high input:checked + label { border-color: var(--red);    color: var(--red);    background: rgba(192,57,43,0.07); }
+
+/* リスティングテーブル */
+.listing-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.lt { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 380px; }
+table.lt th {
+  background: #f4f6f9; font-size: 10px; font-weight: 700; color: var(--sub);
+  letter-spacing: 0.08em; padding: 8px 10px; text-align: left;
+  border-bottom: 2px solid var(--border); text-transform: uppercase; white-space: nowrap;
+}
+table.lt td { padding: 5px 6px; border-bottom: 1px solid #edf1f7; vertical-align: middle; }
+table.lt tr:last-child td { border-bottom: none; }
+table.lt input {
+  border: 1.5px solid var(--border); border-radius: 5px; padding: 7px 9px;
+  font-size: 13px; font-family: inherit; width: 100%; background: #fafbfd;
+  color: var(--text); outline: none; transition: border-color 0.15s;
+}
+table.lt input:focus { border-color: var(--blue); background: #fff; }
+.row-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--light); text-align: center; }
+.del-btn {
+  background: none; border: none; color: var(--light); font-size: 15px;
+  padding: 4px 8px; cursor: pointer; border-radius: 4px; transition: color 0.15s;
+  display: flex; align-items: center;
+}
+.del-btn:active { color: var(--red); }
+.add-btn {
+  margin-top: 10px; width: 100%;
+  background: rgba(44,95,138,0.06); border: 1.5px dashed #9ab8d4;
+  border-radius: 7px; padding: 9px; font-size: 12px; font-weight: 600;
+  color: var(--blue); cursor: pointer; letter-spacing: 0.06em;
+  transition: background 0.15s; font-family: inherit;
+}
+.add-btn:active { background: rgba(44,95,138,0.12); }
+
+/* X線アップロード */
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 10px; padding: 22px 16px;
+  text-align: center; cursor: pointer; background: #fafbfd;
+  transition: all 0.18s; position: relative; margin-bottom: 12px;
+}
+.drop-zone.drag-over { border-color: var(--blue); background: rgba(44,95,138,0.04); }
+.drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.drop-zone .icon { font-size: 28px; display: block; margin-bottom: 6px; }
+.drop-zone p { font-size: 12px; color: var(--sub); line-height: 1.6; }
+.drop-zone p strong { color: var(--blue); }
+
+/* X線グリッド - ラベルを外に出す */
+.xray-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.xray-item { border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); }
+.xray-img-wrap {
+  background: #111;
+  aspect-ratio: 4/3;
+  position: relative;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+.xray-img-wrap img {
+  width: 100%; height: 100%; object-fit: contain; display: block;
+  transition: transform 0.2s;
+}
+.xray-img-wrap:active img { transform: scale(1.04); }
+.zoom-btn {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(0,0,0,0.55); border: none; color: #fff;
+  width: 26px; height: 26px; border-radius: 50%; font-size: 13px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.rm-btn {
+  position: absolute; top: 6px; left: 6px;
+  background: rgba(0,0,0,0.55); border: none; color: #fff;
+  width: 22px; height: 22px; border-radius: 50%; font-size: 12px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+/* ラベルは画像の外・下に */
+.xray-label-wrap { padding: 6px 8px; background: #f4f6f9; border-top: 1px solid var(--border); }
+.xray-label-wrap input {
+  background: transparent; border: none; color: var(--sub);
+  font-size: 11px; width: 100%; outline: none; font-family: inherit; text-align: center;
+}
+
+/* ライトボックス */
+.lightbox {
+  display: none;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.92);
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 6px; }
+.lightbox .close-lb {
+  position: absolute; top: 16px; right: 16px;
+  background: rgba(255,255,255,0.15); border: none; color: #fff;
+  width: 36px; height: 36px; border-radius: 50%; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* メタ行 */
+.meta-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.meta-row .field { flex: 1; }
+
+/* フッター */
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(28,43,64,0.97); backdrop-filter: blur(8px);
+  padding: 11px 16px; display: flex; gap: 10px; z-index: 50;
+}
+.footer .btn { flex: 1; padding: 12px; font-size: 13px; }
+
+/* 印刷 */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff; }
+  .top-bar, .footer, .no-print { display: none !important; }
+  .page { padding: 0; max-width: 100%; }
+  .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 10px; }
+  .field input, .field select, .field textarea, table.lt input {
+    border: 1px solid #ccc !important; background: #fff !important; box-shadow: none !important;
+  }
+  .drop-zone { display: none !important; }
+  .xray-grid { display: grid !important; }
+  .lightbox { display: none !important; }
+  .zoom-btn, .rm-btn { display: none !important; }
+  @page { margin: 12mm 10mm; size: A4; }
+}
+</style>
+</head>
+<body>
+
+<!-- ライトボックス -->
+<div class="lightbox" id="lightbox" onclick="closeLb()">
+  <button class="close-lb" onclick="closeLb()">✕</button>
+  <img id="lbImg" src="" alt="">
+</div>
+
+<div class="top-bar">
+  <span class="title">新患レポート</span>
+  <div class="actions">
+    <button class="btn btn-save no-print" onclick="saveLocal()">保存</button>
+    <button class="btn btn-pdf no-print" onclick="window.print()">PDF出力</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 日付・担当者 -->
+  <div class="meta-row">
+    <div class="field">
+      <label>来院日</label>
+      <input type="date" id="visitDate">
+    </div>
+    <div class="field">
+      <label>担当者</label>
+      <input type="text" id="practitioner" placeholder="担当者名">
+    </div>
+  </div>
+
+  <!-- ① 考察・アドバイス希望（最初に） -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">1</span>
+      <h2>考察 / アドバイス希望</h2>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>まずここを見てほしい・確認したい点</label>
+        <textarea id="advice" class="sm" placeholder="先輩に確認してほしいこと、判断に迷っている点をまず書く"></textarea>
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <label>考察</label>
+        <textarea id="impression" placeholder="サブラクセーションの背景・Innate評価・調整方針など"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 緊急度 -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">2</span>
+      <h2>緊急度</h2>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <div class="urgency-row">
+          <div class="urg-low">
+            <input type="radio" name="urgency" id="urgLow" value="低">
+            <label for="urgLow">🟢 低</label>
+          </div>
+          <div class="urg-mid">
+            <input type="radio" name="urgency" id="urgMid" value="中" checked>
+            <label for="urgMid">🟡 中</label>
+          </div>
+          <div class="urg-high">
+            <input type="radio" name="urgency" id="urgHigh" value="高">
+            <label for="urgHigh">🔴 高</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 患者情報 -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">3</span>
+      <h2>患者情報</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>名前</label>
+          <input type="text" id="name" placeholder="塩川 太郎">
+        </div>
+        <div class="field">
+          <label>年齢</label>
+          <input type="number" id="age" placeholder="42">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>性別</label>
+          <div class="gender-row">
+            <input type="radio" name="sex" id="sM" value="男性">
+            <label for="sM">男性</label>
+            <input type="radio" name="sex" id="sF" value="女性">
+            <label for="sF">女性</label>
+            <input type="radio" name="sex" id="sO" value="その他">
+            <label for="sO">その他</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 主訴・症状 -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">4</span>
+      <h2>主訴・症状</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>主訴</label>
+          <input type="text" id="complaint" placeholder="例：腰痛、頸部痛、頭痛など">
+        </div>
+        <div class="field">
+          <label>期間</label>
+          <input type="text" id="duration" placeholder="3ヶ月前から">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>症状の状態</label>
+          <textarea id="symptomState" class="sm" placeholder="VAS・増悪因子・緩解因子・放散痛・しびれなど"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 備考 -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">5</span>
+      <h2>この人にまつわる備考</h2>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <textarea id="memo" placeholder="仕事・生活・既往歴・服薬・性格・気になったこと、なんでも自由に"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ 検査所見 -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">6</span>
+      <h2>検査所見</h2>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <textarea id="findings" placeholder="姿勢・ROM・触診・神経学的検査・特殊検査など気になった所見をまとめて"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ リスティング -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">7</span>
+      <h2>リスティング</h2>
+    </div>
+    <div class="card-body">
+      <div class="listing-wrap">
+        <table class="lt" id="ltTable">
+          <thead>
+            <tr>
+              <th style="width:28px;">#</th>
+              <th style="width:22%">椎骨 / 部位</th>
+              <th style="width:32%">リスティング</th>
+              <th>根拠</th>
+              <th style="width:32px;"></th>
+            </tr>
+          </thead>
+          <tbody id="ltBody"></tbody>
+        </table>
+      </div>
+      <button class="add-btn no-print" onclick="addRow()">＋ 行を追加</button>
+    </div>
+  </div>
+
+  <!-- ⑧ X線 -->
+  <div class="card">
+    <div class="card-head">
+      <span class="num">8</span>
+      <h2>レントゲン</h2>
+    </div>
+    <div class="card-body">
+      <div class="drop-zone no-print" id="dropZone" onclick="document.getElementById('fileIn').click()">
+        <input type="file" id="fileIn" accept="image/*" multiple onchange="onFile(event)">
+        <span class="icon">🩻</span>
+        <p><strong>タップ or ドロップ</strong>で追加<br>複数枚OK・タップで拡大表示</p>
+      </div>
+      <div class="xray-grid" id="xrayGrid"></div>
+      <div class="field" style="margin-top:12px;">
+        <label>X線コメント</label>
+        <textarea id="xrayNote" class="sm" placeholder="椎間板高・アライメント・骨変化など読影メモ"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- フッター -->
+<div class="footer no-print">
+  <button class="btn btn-save" onclick="saveLocal()">💾 一時保存</button>
+  <button class="btn btn-pdf" onclick="window.print()">📄 PDF出力</button>
+</div>
+
+<script>
+let rowCount = 0;
+let xrays = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+  addRow(); addRow(); addRow();
+
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')).forEach(addXray);
+  });
+
+  loadLocal();
+});
+
+function addRow() {
+  rowCount++;
+  const id = `r${rowCount}`;
+  const tr = document.createElement('tr');
+  tr.id = id;
+  tr.innerHTML = `
+    <td class="row-num">${rowCount}</td>
+    <td><input type="text" placeholder="C1, L4…"></td>
+    <td><input type="text" placeholder="AS-La, PI-Ex…"></td>
+    <td><input type="text" placeholder="触診・検査根拠"></td>
+    <td><button class="del-btn no-print" onclick="document.getElementById('${id}').remove()">✕</button></td>
+  `;
+  document.getElementById('ltBody').appendChild(tr);
+}
+
+function onFile(e) {
+  [...e.target.files].forEach(addXray);
+  e.target.value = '';
+}
+
+function addXray(file) {
+  const fr = new FileReader();
+  fr.onload = ev => {
+    const id = 'x' + Date.now() + Math.random().toString(36).slice(2,5);
+    xrays.push({ id, src: ev.target.result, lbl: file.name });
+    renderXrays();
+  };
+  fr.readAsDataURL(file);
+}
+
+function renderXrays() {
+  const g = document.getElementById('xrayGrid');
+  g.innerHTML = '';
+  xrays.forEach(x => {
+    const d = document.createElement('div');
+    d.className = 'xray-item';
+    d.id = x.id;
+    d.innerHTML = `
+      <div class="xray-img-wrap" onclick="openLb('${x.id}')">
+        <img src="${x.src}" alt="${x.lbl}">
+        <button class="zoom-btn no-print" onclick="event.stopPropagation();openLb('${x.id}')">🔍</button>
+        <button class="rm-btn no-print" onclick="event.stopPropagation();removeXray('${x.id}')">✕</button>
+      </div>
+      <div class="xray-label-wrap">
+        <input type="text" value="${x.lbl}" placeholder="ラベル"
+          onchange="xrays.find(i=>i.id==='${x.id}').lbl=this.value"
+          onclick="event.stopPropagation()">
+      </div>
+    `;
+    g.appendChild(d);
+  });
+}
+
+function openLb(id) {
+  const x = xrays.find(i => i.id === id);
+  if (!x) return;
+  document.getElementById('lbImg').src = x.src;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLb() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+function removeXray(id) {
+  xrays = xrays.filter(i => i.id !== id);
+  renderXrays();
+}
+
+function v(id) { return document.getElementById(id)?.value || ''; }
+
+function saveLocal() {
+  const d = {
+    visitDate: v('visitDate'), practitioner: v('practitioner'),
+    urgency: document.querySelector('input[name="urgency"]:checked')?.value,
+    advice: v('advice'), impression: v('impression'),
+    name: v('name'), age: v('age'),
+    sex: document.querySelector('input[name="sex"]:checked')?.value,
+    complaint: v('complaint'), duration: v('duration'),
+    symptomState: v('symptomState'), memo: v('memo'),
+    findings: v('findings'), xrayNote: v('xrayNote'),
+  };
+  try { localStorage.setItem('sr3', JSON.stringify(d)); alert('✅ 保存しました'); }
+  catch(e) { alert('保存失敗'); }
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem('sr3');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const keys = ['visitDate','practitioner','advice','impression','name','age',
+                  'complaint','duration','symptomState','memo','findings','xrayNote'];
+    keys.forEach(k => { if (d[k] !== undefined) document.getElementById(k).value = d[k]; });
+    if (d.sex) { const el = document.querySelector(`input[name="sex"][value="${d.sex}"]`); if(el) el.checked = true; }
+    if (d.urgency) { const el = document.querySelector(`input[name="urgency"][value="${d.urgency}"]`); if(el) el.checked = true; }
+  } catch(e) {}
+}
+</script>
+</body>
+</html>
